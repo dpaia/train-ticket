@@ -1,11 +1,13 @@
 package assurance.controller;
 
 import assurance.service.AssuranceService;
+import edu.fudan.common.util.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
@@ -34,6 +36,28 @@ public class AssuranceController {
     public HttpEntity getAllAssurances(@RequestHeader HttpHeaders headers) {
         AssuranceController.LOGGER.info("[getAllAssurances][Get All Assurances]");
         return ok(assuranceService.getAllAssurances(headers));
+    }
+
+
+    @CrossOrigin(origins = "*")
+    @GetMapping(path = "/assurances/userid/{userId}")
+    public HttpEntity getUserAssurances(@PathVariable String userId,
+                                       @RequestParam(value = "page", required = false) Integer page,
+                                       @RequestParam(value = "size", required = false) Integer size,
+                                       @RequestHeader HttpHeaders headers) {
+        // UUID Validation
+        UUID userUUID;
+        try {
+            userUUID = UUID.fromString(userId);
+        } catch (IllegalArgumentException e) {
+            AssuranceController.LOGGER.error("[getUserAssurances][Invalid UUID: {}]", userId);
+            // Return Response wrapper with 400 status
+            return ResponseEntity.badRequest()
+                .body(new Response<>(0, "Invalid UUID format", null));
+        }
+        
+        AssuranceController.LOGGER.info("[getUserAssurances][Get User's Assurances][page: {}, size: {}]", page, size);
+        return ok(assuranceService.getUserAssurancesPage(userUUID, page, size, headers));
     }
 
     @CrossOrigin(origins = "*")

@@ -15,6 +15,10 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpHeaders;
 
 import java.util.ArrayList;
@@ -180,6 +184,52 @@ public class AssuranceServiceImplTest {
         assuranceTypeBeanList.add(assuranceTypeBean);
         Response result = assuranceServiceImpl.getAllAssuranceTypes(headers);
         Assert.assertEquals(new Response<>(1, "Find All Assurance", assuranceTypeBeanList), result);
+    }
+
+    @Test
+    public void testGetAssurancesPage_BoundaryDefaults() {
+        // size <= 0 and page < 0 should default to page=0,size=10
+        // Empty page should return "No Content" response
+        ArrayList<Assurance> data = new ArrayList<>();
+        Pageable expectedPageable = PageRequest.of(0, 10);
+        Page<Assurance> emptyPage = new PageImpl<>(data, expectedPageable, 0);
+        
+        Mockito.when(assuranceRepository.findAll(Mockito.any(Pageable.class)))
+                .thenReturn(emptyPage);
+        
+        Response response = assuranceServiceImpl.getUserAssurancesPage(UUID.randomUUID(), -1, 0, headers);
+        
+        // Empty page should return "No Content" response
+        Assert.assertEquals((Integer) 0, response.getStatus());
+        Assert.assertEquals("No Content", response.getMsg());
+        Assert.assertNull(response.getData());
+    }
+
+    @Test
+    public void testGetAssurancesPage_LastPagePartial() {
+        // Simulate page 1 (size 2) of 3 total items -> should return 1 element (the 3rd item)
+        ArrayList<Assurance> pageContent = new ArrayList<>();
+        pageContent.add(new Assurance("a3", "o3", AssuranceType.TRAFFIC_ACCIDENT)); // Only the 3rd item on page 1
+        
+        Pageable expectedPageable = PageRequest.of(1, 2);
+        Page<Assurance> partialPage = new PageImpl<>(pageContent, expectedPageable, 3); // 3 total elements
+        
+        Mockito.when(assuranceRepository.findAll(Mockito.any(Pageable.class)))
+                .thenReturn(partialPage);
+        
+        Response response = assuranceServiceImpl.getUserAssurancesPage(UUID.randomUUID(), 1, 2, headers);
+        
+        // Should return success response with page data
+        Assert.assertEquals((Integer) 1, response.getStatus());
+        Assert.assertEquals("Success", response.getMsg());
+        
+        // Get the Page from Response data
+        Page<PlainAssurance> page = (Page<PlainAssurance>) response.getData();
+        Assert.assertEquals(1, page.getNumber());
+        Assert.assertEquals(2, page.getSize());
+        Assert.assertEquals(3, page.getTotalElements());
+        Assert.assertEquals(1, page.getContent().size());
+        Assert.assertEquals("a3", page.getContent().get(0).getId());
     }
 
 }

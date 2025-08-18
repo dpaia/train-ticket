@@ -1,6 +1,8 @@
 package assurance.service;
 
+import assurance.entity.PlainAssurance;
 import edu.fudan.common.util.Response;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpHeaders;
 
 import javax.transaction.Transactional;
@@ -77,6 +79,17 @@ public interface AssuranceService {
      * @return Response
      */
     Response getAllAssurances(HttpHeaders headers);
+
+    /**
+     * get assurances for a user with pagination
+     *
+     * @param userId user id
+     * @param page page number (0-indexed, defaults to 0)
+     * @param size page size (defaults to 10)
+     * @param headers headers
+     * @return Response containing Page<PlainAssurance>
+     */
+    Response getUserAssurancesPage(UUID userId, Integer page, Integer size, HttpHeaders headers);
 
     /**
      * get all assurance types
