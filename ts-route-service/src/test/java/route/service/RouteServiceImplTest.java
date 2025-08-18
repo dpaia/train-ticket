@@ -13,6 +13,8 @@ import org.mockito.MockitoAnnotations;
 import org.springframework.http.HttpHeaders;
 import route.entity.Route;
 import route.entity.RouteInfo;
+import route.mapper.RouteDTO;
+import route.mapper.RouteMapper;
 import route.repository.RouteRepository;
 
 import java.util.ArrayList;
@@ -28,6 +30,9 @@ public class RouteServiceImplTest {
 
     @Mock
     private RouteRepository routeRepository;
+
+    @Mock
+    private RouteMapper routeMapper;
 
     private HttpHeaders headers = new HttpHeaders();
 
@@ -46,7 +51,9 @@ public class RouteServiceImplTest {
     @Test
     public void testCreateAndModify2() {
         RouteInfo info = new RouteInfo("id", "start_station", "end_station", "shanghai", "5");
+        RouteDTO mockRouteDTO = new RouteDTO();
         Mockito.when(routeRepository.save(Mockito.any(Route.class))).thenReturn(null);
+        Mockito.when(routeMapper.toDto(Mockito.any(Route.class))).thenReturn(mockRouteDTO);
         Response result = routeServiceImpl.createAndModify(info, headers);
         Assert.assertEquals("Save and Modify success", result.getMsg());
     }
@@ -54,8 +61,10 @@ public class RouteServiceImplTest {
     @Test
     public void testCreateAndModify3() {
         RouteInfo info = new RouteInfo("id123456789", "start_station", "end_station", "shanghai", "5");
+        RouteDTO mockRouteDTO = new RouteDTO();
         Mockito.when(routeRepository.findById(Mockito.anyString())).thenReturn(null);
         Mockito.when(routeRepository.save(Mockito.any(Route.class))).thenReturn(null);
+        Mockito.when(routeMapper.toDto(Mockito.any(Route.class))).thenReturn(mockRouteDTO);
         Response result = routeServiceImpl.createAndModify(info, headers);
         Assert.assertEquals("Save and Modify success", result.getMsg());
     }
@@ -87,9 +96,11 @@ public class RouteServiceImplTest {
     @Test
     public void testGetRouteById2() {
         Route route = new Route();
+        RouteDTO mockRouteDTO = new RouteDTO();
         Mockito.when(routeRepository.findById(Mockito.anyString())).thenReturn(Optional.of(route));
+        Mockito.when(routeMapper.toDto(route)).thenReturn(mockRouteDTO);
         Response result = routeServiceImpl.getRouteById("route_id", headers);
-        Assert.assertEquals(new Response<>(1, "Success", Optional.of(route)), result);
+        Assert.assertEquals(new Response<>(1, "Success", mockRouteDTO), result);
     }
 
     @Test
@@ -103,7 +114,10 @@ public class RouteServiceImplTest {
         Route route = new Route(UUID.randomUUID().toString(), stations, distances, "shanghai", "nanjing");
         ArrayList<Route> routes = new ArrayList<>();
         routes.add(route);
+        List<RouteDTO> mockRouteDTOs = new ArrayList<>();
+        mockRouteDTOs.add(new RouteDTO());
         Mockito.when(routeRepository.findAll()).thenReturn(routes);
+        Mockito.when(routeMapper.toDtoList(Mockito.anyList())).thenReturn(mockRouteDTOs);
         Response result = routeServiceImpl.getRouteByStartAndEnd("shanghai", "nanjing", headers);
         Assert.assertEquals("Success", result.getMsg());
     }
@@ -120,7 +134,10 @@ public class RouteServiceImplTest {
     public void testGetAllRoutes1() {
         ArrayList<Route> routes = new ArrayList<>();
         routes.add(new Route());
+        List<RouteDTO> mockRouteDTOs = new ArrayList<>();
+        mockRouteDTOs.add(new RouteDTO());
         Mockito.when(routeRepository.findAll()).thenReturn(routes);
+        Mockito.when(routeMapper.toDtoList(routes)).thenReturn(mockRouteDTOs);
         Response result = routeServiceImpl.getAllRoutes(headers);
         Assert.assertEquals("Success", result.getMsg());
     }

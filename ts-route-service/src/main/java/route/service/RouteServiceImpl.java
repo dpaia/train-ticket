@@ -9,6 +9,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import route.entity.Route;
 import route.entity.RouteInfo;
+import route.mapper.RouteDTO;
+import route.mapper.RouteMapper;
 import route.repository.RouteRepository;
 
 import java.util.ArrayList;
@@ -24,6 +26,10 @@ public class RouteServiceImpl implements RouteService {
 
     @Autowired
     private RouteRepository routeRepository;
+    
+    @Autowired
+    private RouteMapper routeMapper;
+    
     private static final Logger LOGGER = LoggerFactory.getLogger(RouteServiceImpl.class);
 
     String success = "Success";
@@ -61,7 +67,8 @@ public class RouteServiceImpl implements RouteService {
         route.setStations(stationList);
         route.setDistances(distanceList);
         routeRepository.save(route);
-        return new Response<>(1, "Save and Modify success", route);
+        RouteDTO routeDTO = routeMapper.toDto(route);
+        return new Response<>(1, "Save and Modify success", routeDTO);
     }
 
     @Override
@@ -84,7 +91,8 @@ public class RouteServiceImpl implements RouteService {
             RouteServiceImpl.LOGGER.error("[getRouteById][Find route error][Route not found][RouteId: {}]",routeId);
             return new Response<>(0, "No content with the routeId", null);
         } else {
-            return new Response<>(1, success, route);
+            RouteDTO routeDTO = routeMapper.toDto(route.get());
+            return new Response<>(1, success, routeDTO);
         }
 
     }
@@ -96,7 +104,8 @@ public class RouteServiceImpl implements RouteService {
             RouteServiceImpl.LOGGER.error("[getRouteById][Find route error][Route not found][RouteIds: {}]",routeIds);
             return new Response<>(0, "No content with the routeIds", null);
         } else {
-            return new Response<>(1, success, routes);
+            List<RouteDTO> routeDTOs = routeMapper.toDtoList(routes);
+            return new Response<>(1, success, routeDTOs);
         }
     }
 
@@ -113,7 +122,8 @@ public class RouteServiceImpl implements RouteService {
             }
         }
         if (!resultList.isEmpty()) {
-            return new Response<>(1, success, resultList);
+            List<RouteDTO> routeDTOs = routeMapper.toDtoList(resultList);
+            return new Response<>(1, success, routeDTOs);
         } else {
             RouteServiceImpl.LOGGER.warn("[getRouteByStartAndEnd][Find by start and terminal warn][Routes not found][startId: {},terminalId: {}]",startId,terminalId);
             return new Response<>(0, "No routes with the startId and terminalId", null);
@@ -124,7 +134,8 @@ public class RouteServiceImpl implements RouteService {
     public Response getAllRoutes(HttpHeaders headers) {
         ArrayList<Route> routes = routeRepository.findAll();
         if (routes != null && !routes.isEmpty()) {
-            return new Response<>(1, success, routes);
+            List<RouteDTO> routeDTOs = routeMapper.toDtoList(routes);
+            return new Response<>(1, success, routeDTOs);
         } else {
             RouteServiceImpl.LOGGER.warn("[getAllRoutes][Find all routes warn][{}]","No Content");
             return new Response<>(0, "No Content", null);
