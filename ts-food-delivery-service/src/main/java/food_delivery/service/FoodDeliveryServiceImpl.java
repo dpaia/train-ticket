@@ -2,6 +2,8 @@ package food_delivery.service;
 
 
 import edu.fudan.common.util.Response;
+import food_delivery.dto.FoodDeliveryStatusDTO;
+import food_delivery.dto.FoodDto;
 import food_delivery.entity.*;
 import edu.fudan.common.entity.*;
 import food_delivery.repository.FoodDeliveryOrderRepository;
@@ -134,7 +136,7 @@ public class FoodDeliveryServiceImpl implements FoodDeliveryService {
             t.setTripId(tripId);
             foodDeliveryOrderRepository.save(t);
             LOGGER.info("[updateTripId] update tripId success. id:{}, tripId:{}", id, tripId);
-            return new Response<>(1, "update tripId success", t);
+            return new Response<>(1, "update tripId success", new FoodDeliveryStatusDTO(t));
         }
     }
 
@@ -150,7 +152,7 @@ public class FoodDeliveryServiceImpl implements FoodDeliveryService {
             t.setSeatNo(seatNo);
             foodDeliveryOrderRepository.save(t);
             LOGGER.info("[updateSeatNo] update seatNo success. id:{}, seatNo:{}", id, seatNo);
-            return new Response<>(1, "update seatNo success", t);
+            return new Response<>(1, "update seatNo success", new FoodDeliveryStatusDTO(t));
         }
     }
 
@@ -166,7 +168,7 @@ public class FoodDeliveryServiceImpl implements FoodDeliveryService {
             t.setDeliveryTime(deliveryTime);
             foodDeliveryOrderRepository.save(t);
             LOGGER.info("[updateDeliveryTime] update deliveryTime success. id:{}, deliveryTime:{}", id, deliveryTime);
-            return new Response<>(1, "update deliveryTime success", t);
+            return new Response<>(1, "update deliveryTime success", new FoodDeliveryStatusDTO(t));
         }
     }
 }
