@@ -25,3 +25,7 @@ spring:
 
 swagger:
   controllerPackage: com.trainticket.controller
+
+payment:
+  search:
+    max-page-size: 1000
