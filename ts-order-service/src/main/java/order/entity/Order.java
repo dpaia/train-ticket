@@ -97,8 +97,8 @@ public class Order {
             return false;
         }
         Order other = (Order) obj;
-        return getBoughtDate().equals(other.getBoughtDate())
-                && getBoughtDate().equals(other.getTravelDate())
+        return boughtDate.equals(other.getBoughtDate())
+                && travelDate.equals(other.getTravelDate())
                 && getTravelTime().equals(other.getTravelTime())
                 && accountId .equals( other.getAccountId() )
                 && contactsName.equals(other.getContactsName())
