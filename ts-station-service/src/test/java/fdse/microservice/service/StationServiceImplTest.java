@@ -1,6 +1,9 @@
 package fdse.microservice.service;
 
 import edu.fudan.common.util.Response;
+import fdse.microservice.controller.dto.StationCreateDTO;
+import fdse.microservice.controller.dto.StationDTO;
+import fdse.microservice.controller.dto.StationUpdateDTO;
 import fdse.microservice.entity.Station;
 import fdse.microservice.repository.StationRepository;
 import org.junit.Assert;
@@ -15,7 +18,9 @@ import org.mockito.MockitoAnnotations;
 import org.springframework.http.HttpHeaders;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 @RunWith(JUnit4.class)
 public class StationServiceImplTest {
@@ -35,19 +40,23 @@ public class StationServiceImplTest {
 
     @Test
     public void testCreate1() {
-        Station station = new Station();
-        Mockito.when(repository.findById(Mockito.anyString()).get()).thenReturn(null);
-        Mockito.when(repository.save(Mockito.any(Station.class))).thenReturn(null);
-        Response result = stationServiceImpl.create(station, headers);
-        Assert.assertEquals(new Response<>(1, "Create success", station), result);
+        StationCreateDTO station = new StationCreateDTO("name", 1);
+        Mockito.when(repository.findById(Mockito.anyString())).thenReturn(Optional.empty());
+        Station created = new Station("name", 1);
+        created.setId("id");
+        Mockito.when(repository.save(Mockito.any(Station.class))).thenReturn(created);
+        StationDTO result = stationServiceImpl.create(station, headers);
+        Assert.assertNotNull(result.getId());
+        Assert.assertEquals(station.getName(), result.getName());
     }
 
-    @Test
+    @Test(expected = IllegalArgumentException.class)
     public void testCreate2() {
         Station station = new Station();
-        Mockito.when(repository.findById(Mockito.anyString()).get()).thenReturn(station);
-        Response result = stationServiceImpl.create(station, headers);
-        Assert.assertEquals(new Response<>(0, "Already exists", station), result);
+        Mockito.when(repository.findById(Mockito.anyString())).thenReturn(Optional.of(station));
+        StationCreateDTO stationCreateDTO = new StationCreateDTO(station.getName(), 1);
+
+        stationServiceImpl.create(stationCreateDTO, headers);
     }
 
     @Test
@@ -63,38 +72,36 @@ public class StationServiceImplTest {
         Assert.assertFalse(stationServiceImpl.exist("station_name", headers));
     }
 
-    @Test
+    @Test(expected = IllegalArgumentException.class)
     public void testUpdate1() {
-        Station info = new Station();
-        Mockito.when(repository.findById(Mockito.anyString())).thenReturn(null);
-        Response result = stationServiceImpl.update(info, headers);
-        Assert.assertEquals(new Response<>(0, "Station not exist", null), result);
+        StationUpdateDTO info = new StationUpdateDTO("id", "name", 1);
+        Mockito.when(repository.findById(Mockito.anyString())).thenReturn(Optional.empty());
+        stationServiceImpl.update(info, headers);
     }
 
     @Test
     public void testUpdate2() {
-        Station info = new Station();
-        Mockito.when(repository.findById(Mockito.anyString()).get()).thenReturn(info);
-        Mockito.when(repository.save(Mockito.any(Station.class))).thenReturn(null);
-        Response result = stationServiceImpl.update(info, headers);
-        Assert.assertEquals("Update success", result.getMsg());
+        StationUpdateDTO info = new StationUpdateDTO("id", "name", 1);
+        Mockito.when(repository.findById(Mockito.anyString())).thenReturn(Optional.of(new Station("old name", info.getStayTime())));
+        Mockito.when(repository.save(Mockito.any(Station.class))).thenReturn(new Station("name", info.getStayTime()));
+        StationDTO result = stationServiceImpl.update(info, headers);
+        Assert.assertEquals("name", result.getName());
     }
 
     @Test
     public void testDelete1() {
+        String id = "id";
         Station info = new Station();
-        Mockito.when(repository.findById(Mockito.anyString()).get()).thenReturn(info);
+        info.setId(id);
+        Mockito.when(repository.findById(Mockito.anyString())).thenReturn(Optional.of(info));
         Mockito.doNothing().doThrow(new RuntimeException()).when(repository).delete(Mockito.any(Station.class));
-        Response result = stationServiceImpl.delete(info.getId(), headers);
-        Assert.assertEquals("Delete success", result.getMsg());
+        stationServiceImpl.delete(id, headers);
     }
 
-    @Test
+    @Test(expected = IllegalArgumentException.class)
     public void testDelete2() {
-        Station info = new Station();
-        Mockito.when(repository.findById(Mockito.anyString())).thenReturn(null);
-        Response result = stationServiceImpl.delete(info.getId(), headers);
-        Assert.assertEquals(new Response<>(0, "Station not exist", null), result);
+        Mockito.when(repository.findById(Mockito.anyString())).thenReturn(Optional.empty());
+        stationServiceImpl.delete("any id", headers);
     }
 
     @Test
@@ -102,30 +109,30 @@ public class StationServiceImplTest {
         List<Station> stations = new ArrayList<>();
         stations.add(new Station());
         Mockito.when(repository.findAll()).thenReturn(stations);
-        Response result = stationServiceImpl.query(headers);
-        Assert.assertEquals(new Response<>(1, "Find all content", stations), result);
+        List<StationDTO> result = stationServiceImpl.query(headers);
+        Assert.assertEquals(stations.size(), result.size());
     }
 
     @Test
     public void testQuery2() {
-        Mockito.when(repository.findAll()).thenReturn(null);
-        Response result = stationServiceImpl.query(headers);
-        Assert.assertEquals(new Response<>(0, "No content", null), result);
+        Mockito.when(repository.findAll()).thenReturn(Collections.emptyList());
+        List<StationDTO> result = stationServiceImpl.query(headers);
+        Assert.assertEquals(Collections.emptyList(), result);
     }
 
     @Test
     public void testQueryForId1() {
         Station station = new Station();
         Mockito.when(repository.findByName(Mockito.anyString())).thenReturn(station);
-        Response result = stationServiceImpl.queryForId("station_name", headers);
-        Assert.assertEquals(new Response<>(1, "Success", station.getId()), result);
+        String result = stationServiceImpl.queryForId("station_name", headers);
+        Assert.assertEquals(station.getId(), result);
     }
 
     @Test
     public void testQueryForId2() {
         Mockito.when(repository.findByName(Mockito.anyString())).thenReturn(null);
-        Response result = stationServiceImpl.queryForId("station_name", headers);
-        Assert.assertEquals(new Response<>(0, "Not exists", "station_name"), result);
+        String result = stationServiceImpl.queryForId("station_name", headers);
+        Assert.assertNull(result);
     }
 
     @Test
@@ -147,33 +154,34 @@ public class StationServiceImplTest {
     @Test
     public void testQueryById1() {
         Station station = new Station();
-        Mockito.when(repository.findById(Mockito.anyString()).get()).thenReturn(station);
-        Response result = stationServiceImpl.queryById("station_id", headers);
-        Assert.assertEquals(new Response<>(1, "Success", ""), result);
+        Mockito.when(repository.findById(Mockito.anyString())).thenReturn(Optional.of(station));
+        String result = stationServiceImpl.queryById("station_id", headers);
+        Assert.assertEquals("", result);
     }
 
     @Test
     public void testQueryById2() {
-        Mockito.when(repository.findById(Mockito.anyString())).thenReturn(null);
-        Response result = stationServiceImpl.queryById("station_id", headers);
-        Assert.assertEquals(new Response<>(0, "No that stationId", "station_id"), result);
+        Mockito.when(repository.findById(Mockito.anyString())).thenReturn(Optional.empty());
+        String result = stationServiceImpl.queryById("station_id", headers);
+        Assert.assertNull(result);
     }
 
     @Test
     public void testQueryByIdBatch1() {
         List<String> idList = new ArrayList<>();
-        Response result = stationServiceImpl.queryByIdBatch(idList, headers);
-        Assert.assertEquals(new Response<>(0, "No stationNamelist according to stationIdList", new ArrayList<>()), result);
+        List<String> result = stationServiceImpl.queryByIdBatch(idList, headers);
+        Assert.assertEquals(Collections.emptyList(), result);
     }
 
     @Test
     public void testQueryByIdBatch2() {
-        Station station = new Station();
+        Station station = new Station("name");
         List<String> idList = new ArrayList<>();
         idList.add("station_id");
-        Mockito.when(repository.findById(Mockito.anyString()).get()).thenReturn(station);
-        Response result = stationServiceImpl.queryByIdBatch(idList, headers);
-        Assert.assertEquals("Success", result.getMsg());
+        Mockito.when(repository.findById(Mockito.anyString())).thenReturn(Optional.of(station));
+        List<String> result = stationServiceImpl.queryByIdBatch(idList, headers);
+        Assert.assertEquals(1, result.size());
+        Assert.assertEquals("name", result.get(0));
     }
 
 }
