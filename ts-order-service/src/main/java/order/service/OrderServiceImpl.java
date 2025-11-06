@@ -466,5 +466,55 @@ public class OrderServiceImpl implements OrderService {
             return new Response<>(1, "Admin Update Order Success", oldOrder);
         }
     }
+    
+    @Override
+    public Response queryOrdersByAccountAndTravelDate(String accountId, Date startDate, Date endDate, HttpHeaders headers) {
+        OrderServiceImpl.LOGGER.info("[queryOrdersByAccountAndTravelDate][Query Orders By Account And Travel Date][AccountId: {}, StartDate: {}, EndDate: {}]", 
+                                    accountId, startDate, endDate);
+        
+        // Validate input parameters
+        if (accountId == null || accountId.trim().isEmpty()) {
+            OrderServiceImpl.LOGGER.error("[queryOrdersByAccountAndTravelDate][Query Orders Fail][AccountId is null or empty]");
+            return new Response<>(0, "Account ID cannot be null or empty", null);
+        }
+        
+        if (startDate == null) {
+            OrderServiceImpl.LOGGER.error("[queryOrdersByAccountAndTravelDate][Query Orders Fail][Start date is null]");
+            return new Response<>(0, "Start date cannot be null", null);
+        }
+        
+        if (endDate == null) {
+            OrderServiceImpl.LOGGER.error("[queryOrdersByAccountAndTravelDate][Query Orders Fail][End date is null]");
+            return new Response<>(0, "End date cannot be null", null);
+        }
+        
+        // Validate date range - startDate should be before or equal to endDate
+        if (startDate.after(endDate)) {
+            OrderServiceImpl.LOGGER.error("[queryOrdersByAccountAndTravelDate][Query Orders Fail][Invalid date range: startDate {} is after endDate {}]", 
+                                        startDate, endDate);
+            return new Response<>(0, "Start date must be before or equal to end date", null);
+        }
+        
+        try {
+            // Convert dates to strings for repository query
+            String startDateStr = StringUtils.Date2String(startDate);
+            String endDateStr = StringUtils.Date2String(endDate);
+            
+            // Query orders using the repository method
+            ArrayList<Order> orders = orderRepository.findByAccountIdAndTravelDateBetween(accountId, startDateStr, endDateStr);
+            
+            if (orders == null || orders.isEmpty()) {
+                OrderServiceImpl.LOGGER.info("[queryOrdersByAccountAndTravelDate][Query Orders Success][No orders found for AccountId: {}, Date range: {} to {}]", 
+                                            accountId, startDateStr, endDateStr);
+                return new Response<>(1, "No orders found for the specified criteria", new ArrayList<>());
+            }
+            
+            OrderServiceImpl.LOGGER.info("[queryOrdersByAccountAndTravelDate][Query Orders Success][Found: {} orders for AccountId: {}]", 
+                                        orders.size(), accountId);
+            return new Response<>(1, "Query Orders By Account And Travel Date Success", orders);
+        } catch (Exception e) {
+            OrderServiceImpl.LOGGER.error("[queryOrdersByAccountAndTravelDate][Query Orders Fail][Exception occurred: {}]", e.getMessage(), e);
+            return new Response<>(0, "Failed to query orders: " + e.getMessage(), null);
+        }
+    }
 }
-

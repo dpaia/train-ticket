@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSONObject;
 import edu.fudan.common.entity.Seat;
 import edu.fudan.common.util.Response;
 import order.entity.Order;
+import order.entity.OrderByAccountAndDateRangeInfo;
 import order.entity.OrderInfo;
 import order.service.OrderService;
 import org.junit.Assert;
@@ -100,6 +101,85 @@ public class OrderControllerTest {
                 .andExpect(MockMvcResultMatchers.status().isOk())
                 .andReturn().getResponse().getContentAsString();
         Assert.assertEquals(response, JSONObject.parseObject(result, Response.class));
+    }
+    
+    @Test
+    public void testQueryOrdersByAccountAndTravelDate() throws Exception {
+        // Create test request object
+        OrderByAccountAndDateRangeInfo queryInfo = new OrderByAccountAndDateRangeInfo();
+        queryInfo.setAccountId("user_id_1");
+        queryInfo.setStartDate(new Date());
+        queryInfo.setEndDate(new Date(System.currentTimeMillis() + 86400000)); // next day
+        
+        // Mock service response
+        Mockito.when(orderService.queryOrdersByAccountAndTravelDate(
+            Mockito.anyString(), Mockito.any(Date.class), Mockito.any(Date.class), Mockito.any(HttpHeaders.class)))
+            .thenReturn(response);
+        
+        // Convert request to JSON and perform POST request (not GET)
+        String requestJson = JSONObject.toJSONString(queryInfo);
+        String result = mockMvc.perform(MockMvcRequestBuilders.post("/api/v1/orderservice/order/byDate")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(requestJson))
+                .andExpect(MockMvcResultMatchers.status().isOk())
+                .andReturn().getResponse().getContentAsString();
+        
+        // Verify response
+        Assert.assertEquals(response, JSONObject.parseObject(result, Response.class));
+    }
+    
+    @Test
+    public void testQueryOrdersByAccountAndTravelDateWithInvalidDateRange() throws Exception {
+        // Create test request with invalid date range
+        OrderByAccountAndDateRangeInfo queryInfo = new OrderByAccountAndDateRangeInfo();
+        queryInfo.setAccountId("user_id_1");
+        queryInfo.setStartDate(new Date(System.currentTimeMillis() + 86400000)); // tomorrow
+        queryInfo.setEndDate(new Date()); // today - invalid
+        
+        // Mock service to return error response
+        Response errorResponse = new Response(0, "Start date must be before or equal to end date", null);
+        Mockito.when(orderService.queryOrdersByAccountAndTravelDate(
+            Mockito.anyString(), Mockito.any(Date.class), Mockito.any(Date.class), Mockito.any(HttpHeaders.class)))
+            .thenReturn(errorResponse);
+        
+        // Perform request
+        String requestJson = JSONObject.toJSONString(queryInfo);
+        String result = mockMvc.perform(MockMvcRequestBuilders.post("/api/v1/orderservice/order/byDate")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(requestJson))
+                .andExpect(MockMvcResultMatchers.status().isOk())
+                .andReturn().getResponse().getContentAsString();
+        
+        // Verify error response
+        Response actualResponse = JSONObject.parseObject(result, Response.class);
+        Assert.assertEquals(new Integer(0), actualResponse.getStatus());
+    }
+    
+    @Test
+    public void testQueryOrdersByAccountAndTravelDateWithNullValues() throws Exception {
+        // Create test request with null accountId
+        OrderByAccountAndDateRangeInfo queryInfo = new OrderByAccountAndDateRangeInfo();
+        queryInfo.setAccountId(null);
+        queryInfo.setStartDate(new Date());
+        queryInfo.setEndDate(new Date());
+        
+        // Mock service to return error response
+        Response errorResponse = new Response(0, "Account ID cannot be null or empty", null);
+        Mockito.when(orderService.queryOrdersByAccountAndTravelDate(
+            Mockito.any(), Mockito.any(Date.class), Mockito.any(Date.class), Mockito.any(HttpHeaders.class)))
+            .thenReturn(errorResponse);
+        
+        // Perform request
+        String requestJson = JSONObject.toJSONString(queryInfo);
+        String result = mockMvc.perform(MockMvcRequestBuilders.post("/api/v1/orderservice/order/byDate")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(requestJson))
+                .andExpect(MockMvcResultMatchers.status().isOk())
+                .andReturn().getResponse().getContentAsString();
+        
+        // Verify error response
+        Response actualResponse = JSONObject.parseObject(result, Response.class);
+        Assert.assertEquals(new Integer(0), actualResponse.getStatus());
     }
 
     @Test
