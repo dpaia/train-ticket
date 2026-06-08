@@ -34,6 +34,9 @@ public class PaymentControllerTest {
     public void setUp() {
         MockitoAnnotations.initMocks(this);
         mockMvc = MockMvcBuilders.standaloneSetup(paymentController).build();
+        response.setStatus(1);
+        response.setMsg("Success");
+        response.setData(null);
     }
 
     @Test
@@ -51,7 +54,10 @@ public class PaymentControllerTest {
         String result = mockMvc.perform(MockMvcRequestBuilders.post("/api/v1/paymentservice/payment").contentType(MediaType.APPLICATION_JSON).content(requestJson))
                 .andExpect(MockMvcResultMatchers.status().isOk())
                 .andReturn().getResponse().getContentAsString();
-        Assert.assertEquals(response, JSONObject.parseObject(result, Response.class));
+        Response parsedResponse = JSONObject.parseObject(result, Response.class);
+        Assert.assertEquals(response.getStatus(), parsedResponse.getStatus());
+        Assert.assertEquals(response.getMsg(), parsedResponse.getMsg());
+        Assert.assertEquals(response.getData(), parsedResponse.getData());
     }
 
     @Test
@@ -62,7 +68,10 @@ public class PaymentControllerTest {
         String result = mockMvc.perform(MockMvcRequestBuilders.post("/api/v1/paymentservice/payment/money").contentType(MediaType.APPLICATION_JSON).content(requestJson))
                 .andExpect(MockMvcResultMatchers.status().isOk())
                 .andReturn().getResponse().getContentAsString();
-        Assert.assertEquals(response, JSONObject.parseObject(result, Response.class));
+        Response parsedResponse = JSONObject.parseObject(result, Response.class);
+        Assert.assertEquals(response.getStatus(), parsedResponse.getStatus());
+        Assert.assertEquals(response.getMsg(), parsedResponse.getMsg());
+        Assert.assertEquals(response.getData(), parsedResponse.getData());
     }
 
     @Test
@@ -71,7 +80,43 @@ public class PaymentControllerTest {
         String result = mockMvc.perform(MockMvcRequestBuilders.get("/api/v1/paymentservice/payment"))
                 .andExpect(MockMvcResultMatchers.status().isOk())
                 .andReturn().getResponse().getContentAsString();
-        Assert.assertEquals(response, JSONObject.parseObject(result, Response.class));
+        Response parsedResponse = JSONObject.parseObject(result, Response.class);
+        Assert.assertEquals(response.getStatus(), parsedResponse.getStatus());
+        Assert.assertEquals(response.getMsg(), parsedResponse.getMsg());
+        Assert.assertEquals(response.getData(), parsedResponse.getData());
+    }
+
+    @Test
+    public void testSearch() throws Exception {
+        Mockito.when(
+                service.searchByUserAndDateRange(
+                        Mockito.anyString(),   // userId
+                        Mockito.anyString(),   // startDate
+                        Mockito.anyString(),   // endDate
+                        Mockito.anyInt(),      // page
+                        Mockito.anyInt(),      // size
+                        Mockito.any(HttpHeaders.class)
+                )
+        ).thenReturn(response);
+
+        String result = mockMvc.perform(
+                        MockMvcRequestBuilders.get("/api/v1/paymentservice/payment/search")
+                                .param("userId", "testUser")
+                                .param("startDate", "2025-01-01")
+                                .param("endDate", "2025-01-31")
+                                .param("page", "0")
+                                .param("size", "10")
+                                .accept(MediaType.APPLICATION_JSON)
+                )
+                .andExpect(MockMvcResultMatchers.status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        Response parsedResponse = JSONObject.parseObject(result, Response.class);
+        Assert.assertEquals(response.getStatus(), parsedResponse.getStatus());
+        Assert.assertEquals(response.getMsg(), parsedResponse.getMsg());
+        Assert.assertEquals(response.getData(), parsedResponse.getData());
     }
 
 }
