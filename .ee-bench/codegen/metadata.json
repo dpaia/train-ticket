@@ -5,7 +5,11 @@
   "jvm_version": "8",
   "build_system": "maven",
   "expected": {
-    "fail_to_pass": [],
+    "fail_to_pass": [
+      "ts-station-service:fdse.microservice.controller.StationControllerTest",
+      "ts-station-service:fdse.microservice.service.StationServiceImplTest",
+      "ts-station-service:fdse.microservice.integration.StationServiceIntegrationTest"
+    ],
     "pass_to_pass": []
   },
   "environment": {
