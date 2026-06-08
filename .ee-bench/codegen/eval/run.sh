@@ -12,6 +12,41 @@ OVERALL_START=$SECONDS
 
 _elapsed() { echo $(( SECONDS - ${1:-$OVERALL_START} )); }
 
+# --- Write expected test lists early; they also drive Maven module scoping. ---
+cat > /tmp/_expected.json << 'EXPECTED_EOF'
+{"fail_to_pass": {{ instance.expected.fail_to_pass | tojson }}, "pass_to_pass": {{ instance.expected.pass_to_pass | tojson }}, "fail_to_fail": {{ instance.expected.fail_to_fail | default([]) | tojson }}, "fail_to_fail_strict": {{ instance.expected.fail_to_fail_strict | default(true) | tojson }}}
+EXPECTED_EOF
+
+MAVEN_PROJECTS=$(python3 - <<'PY'
+import json
+
+with open("/tmp/_expected.json") as fh:
+    expected = json.load(fh)
+
+modules = []
+seen = set()
+for key in ("fail_to_pass", "pass_to_pass", "fail_to_fail"):
+    for name in expected.get(key, []):
+        if not isinstance(name, str) or ":" not in name:
+            continue
+        module = name.split(":", 1)[0]
+        if module and module not in seen:
+            modules.append(module)
+            seen.add(module)
+
+print(",".join(modules))
+PY
+)
+
+MAVEN_SCOPE_ARGS=()
+if [ -n "$MAVEN_PROJECTS" ]; then
+  MAVEN_SCOPE_ARGS=(-pl "$MAVEN_PROJECTS" -am)
+fi
+
+mvn_eval() {
+  mvn -Dos.detected.name=linux -Dos.detected.arch=x86_64 "${MAVEN_SCOPE_ARGS[@]}" "$@"
+}
+
 # --- _run_tests: run tests with isolated ARTIFACTS_DIR ---
 # Usage: _run_tests <label>
 # Writes: /tmp/<label>_stdout.log, /tmp/<label>_stderr.log, /tmp/<label>_parser.json
@@ -23,7 +58,7 @@ _run_tests() {
   mkdir -p "$ARTIFACTS_DIR"
 
   set +e
-  mvn -Dos.detected.name=linux -Dos.detected.arch=x86_64 test -q > "/tmp/${label}_stdout.log" 2> "/tmp/${label}_stderr.log"
+  mvn_eval test -q > "/tmp/${label}_stdout.log" 2> "/tmp/${label}_stderr.log"
   exit_code=$?
   set -e
 
@@ -51,7 +86,7 @@ fi
 # ============================================================
 COMPILE_START=$SECONDS
 COMPILE_STATUS="pass"
-mvn -Dos.detected.name=linux -Dos.detected.arch=x86_64 compile test-compile -q > /tmp/compile_stdout.log 2> /tmp/compile_stderr.log || {
+mvn_eval compile test-compile -q > /tmp/compile_stdout.log 2> /tmp/compile_stderr.log || {
   COMPILE_STATUS="fail"
 }
 COMPILE_DURATION=$(_elapsed $COMPILE_START)
@@ -79,7 +114,7 @@ BASELINE_TEST_EXIT_CODE=0
 if [ "$COMPILE_STATUS" = "pass" ]; then
   BASELINE_START=$SECONDS
   set +e
-  mvn -Dos.detected.name=linux -Dos.detected.arch=x86_64 test-compile -q > /tmp/baseline_compile_stdout.log 2> /tmp/baseline_compile_stderr.log
+  mvn_eval test-compile -q > /tmp/baseline_compile_stdout.log 2> /tmp/baseline_compile_stderr.log
   BASELINE_TEST_EXIT_CODE=$?
   set -e
   if [ "$BASELINE_TEST_EXIT_CODE" = "0" ]; then
@@ -112,7 +147,7 @@ PATCH_DURATION=$(_elapsed $PATCH_START)
 # ============================================================
 REBUILD_STATUS="skipped"
 if [ "$PATCH_STATUS" = "pass" ]; then
-  mvn -Dos.detected.name=linux -Dos.detected.arch=x86_64 compile test-compile -q > /tmp/rebuild_stdout.log 2> /tmp/rebuild_stderr.log || {
+  mvn_eval compile test-compile -q > /tmp/rebuild_stdout.log 2> /tmp/rebuild_stderr.log || {
     REBUILD_STATUS="fail"
   }
   if [ "$REBUILD_STATUS" != "fail" ]; then
@@ -140,11 +175,6 @@ OVERALL_DURATION=$(_elapsed $OVERALL_START)
 # --- Write temp files for safe passing to Python emitter ---
 echo "$PATCH_OUTPUT" > /tmp/_patch_output.txt
 cat /tmp/compile_stdout.log /tmp/compile_stderr.log > /tmp/_compile_output.txt 2>/dev/null || true
-
-# --- Write expected test lists to file (avoids shell quoting issues) ---
-cat > /tmp/_expected.json << 'EXPECTED_EOF'
-{"fail_to_pass": {{ instance.expected.fail_to_pass | tojson }}, "pass_to_pass": {{ instance.expected.pass_to_pass | tojson }}, "fail_to_fail": {{ instance.expected.fail_to_fail | default([]) | tojson }}, "fail_to_fail_strict": {{ instance.expected.fail_to_fail_strict | default(true) | tojson }}}
-EXPECTED_EOF
 
 # ============================================================
 # Emit EE-bench JSON v2.0 (7 criteria)
