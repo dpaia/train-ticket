@@ -5,7 +5,11 @@
   "jvm_version": "8",
   "build_system": "maven",
   "expected": {
-    "fail_to_pass": [],
+    "fail_to_pass": [
+      "ts-payment-service:com.trainticket.SwaggerIntegrationTest#mediaTypesAreSpecified",
+      "ts-payment-service:com.trainticket.SwaggerIntegrationTest#methodsAreAnnotatedApiOperationAnnotation",
+      "ts-payment-service:com.trainticket.SwaggerIntegrationTest#everyPaymentServiceOperationHasDescription"
+    ],
     "pass_to_pass": []
   },
   "environment": {

@@ -1,0 +1,18 @@
+spring:
+  application:
+    name: ts-payment-service-test
+  datasource:
+    url: jdbc:h2:mem:payment_test;MODE=MYSQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+  cloud:
+    nacos:
+      discovery:
+        register-enabled: false
+        enabled: false
+
+server:
+  port: 0
