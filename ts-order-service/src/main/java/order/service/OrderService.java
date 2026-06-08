@@ -50,4 +50,6 @@ public interface OrderService {
     Response addNewOrder(Order order, HttpHeaders headers);
 
     Response updateOrder(Order order, HttpHeaders headers);
+    
+    Response queryOrdersByAccountAndTravelDate(String accountId, Date startDate, Date endDate, HttpHeaders headers);
 }

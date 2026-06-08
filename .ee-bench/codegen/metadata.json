@@ -5,7 +5,11 @@
   "jvm_version": "8",
   "build_system": "maven",
   "expected": {
-    "fail_to_pass": [],
+    "fail_to_pass": [
+      "ts-order-service:order.controller.OrderControllerTest#testQueryOrdersByAccountAndTravelDate",
+      "ts-order-service:order.service.OrderServiceImplTest#testQueryOrdersByAccountAndTravelDate1",
+      "ts-order-service:order.service.OrderServiceImplTest#testQueryOrdersByAccountAndTravelDate2"
+    ],
     "pass_to_pass": []
   },
   "environment": {

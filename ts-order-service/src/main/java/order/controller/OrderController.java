@@ -11,8 +11,6 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Date;
-
 import static org.springframework.http.ResponseEntity.ok;
 
 /**
@@ -67,6 +65,19 @@ public class OrderController {
                                             @RequestHeader HttpHeaders headers) {
         OrderController.LOGGER.info("[queryOrdersForRefresh][Query Orders][for LoginId:{}]", qi.getLoginId());
         return ok(orderService.queryOrdersForRefresh(qi, qi.getLoginId(), headers));
+    }
+    
+    @CrossOrigin(origins = "*")
+    @PostMapping(path = "/order/byDate")
+    public HttpEntity queryOrdersByAccountAndTravelDate(@RequestBody OrderByAccountAndDateRangeInfo queryInfo,
+                                                       @RequestHeader HttpHeaders headers) {
+        OrderController.LOGGER.info("[queryOrdersByAccountAndTravelDate][Query Orders By Date][AccountId: {}, StartDate: {}, EndDate: {}]", 
+                                   queryInfo.getAccountId(), queryInfo.getStartDate(), queryInfo.getEndDate());
+
+        return ok(orderService.queryOrdersByAccountAndTravelDate(queryInfo.getAccountId(),
+                                                               queryInfo.getStartDate(), 
+                                                               queryInfo.getEndDate(), 
+                                                               headers));
     }
 
     @CrossOrigin(origins = "*")
