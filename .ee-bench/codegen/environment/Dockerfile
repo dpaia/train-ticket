@@ -20,7 +20,7 @@ RUN git init && \
     git reset --hard FETCH_HEAD
 
 # Pre-fetch dependencies into the image so validation can run offline from cache.
-RUN mvn dependency:go-offline -q
+RUN mvn -Dos.detected.name=linux -Dos.detected.arch=x86_64 dependency:go-offline -q
 
 LABEL ee-bench.type="codegen"
 LABEL ee-bench.version="1.0"
