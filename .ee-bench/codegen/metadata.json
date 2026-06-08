@@ -5,7 +5,10 @@
   "jvm_version": "8",
   "build_system": "maven",
   "expected": {
-    "fail_to_pass": [],
+    "fail_to_pass": [
+      "ts-food-delivery-service:food_delivery.controller.FoodDeliveryControllerTest",
+      "ts-food-delivery-service:food_delivery.service.FoodDeliveryServiceImplTest"
+    ],
     "pass_to_pass": []
   },
   "environment": {

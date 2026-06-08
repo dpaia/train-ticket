@@ -2,6 +2,7 @@ package food_delivery.controller;
 
 import com.alibaba.fastjson.JSONObject;
 import edu.fudan.common.util.Response;
+import food_delivery.dto.FoodDeliveryStatusDTO;
 import food_delivery.entity.DeliveryInfo;
 import food_delivery.entity.FoodDeliveryOrder;
 import food_delivery.entity.SeatInfo;
@@ -96,35 +97,95 @@ public class FoodDeliveryControllerTest {
 
     @Test
     public void testUpdateTripId() throws Exception {
-        TripOrderInfo tripOrderInfo = new TripOrderInfo();
-        Mockito.when(foodDeliveryService.updateTripId(Mockito.any(TripOrderInfo.class), Mockito.any(HttpHeaders.class))).thenReturn(response);
+        String tripId = "trip ID";
+        String updatedTripId = "trip ID updated";
+        TripOrderInfo tripOrderInfo = new TripOrderInfo(tripId, updatedTripId);
+        FoodDeliveryStatusDTO foodDeliveryStatusDTO = new FoodDeliveryStatusDTO();
+        foodDeliveryStatusDTO.setTripId(updatedTripId);
+        foodDeliveryStatusDTO.setOrderId(tripId);
+        Response successResponse = new Response(1, "success", foodDeliveryStatusDTO);
+        Mockito.when(foodDeliveryService.updateTripId(Mockito.eq(tripOrderInfo), Mockito.any(HttpHeaders.class)))
+                .thenReturn(successResponse);
         String requestJson = JSONObject.toJSONString(tripOrderInfo);
-        String result = mockMvc.perform(MockMvcRequestBuilders.put("/api/v1/fooddeliveryservice/orders/tripid").contentType(MediaType.APPLICATION_JSON).content(requestJson))
+
+        String result = mockMvc.perform(MockMvcRequestBuilders
+                        .put("/api/v1/fooddeliveryservice/orders/tripid")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestJson))
                 .andExpect(MockMvcResultMatchers.status().isOk())
                 .andReturn().getResponse().getContentAsString();
-        Assert.assertEquals(response, JSONObject.parseObject(result, Response.class));
+        FoodDeliveryStatusDTO foodDeliveryStatusDtoResult = JSONObject.parseObject(
+                JSONObject.parseObject(result, Response.class).getData().toString(), FoodDeliveryStatusDTO.class
+        );
+
+        Assert.assertEquals(successResponse.getStatus(), JSONObject.parseObject(result, Response.class).getStatus());
+        Assert.assertEquals(successResponse.getMsg(), JSONObject.parseObject(result, Response.class).getMsg());
+        Assert.assertEquals(tripId, foodDeliveryStatusDtoResult.getOrderId());
+        Assert.assertEquals(updatedTripId, foodDeliveryStatusDtoResult.getTripId());
+        Mockito.verify(foodDeliveryService, Mockito.times(1))
+                .updateTripId(Mockito.eq(tripOrderInfo), Mockito.any(HttpHeaders.class));
     }
 
     @Test
-    public void testUpdateSeatNo() throws Exception {
-        SeatInfo seatInfo = new SeatInfo();
-        Mockito.when(foodDeliveryService.updateSeatNo(Mockito.any(SeatInfo.class), Mockito.any(HttpHeaders.class))).thenReturn(response);
+    public void testUpdateSeatNumber() throws Exception {
+        String orderId = "order ID";
+        int updatedSeatNumber = 10;
+        SeatInfo seatInfo = new SeatInfo(orderId, updatedSeatNumber);
+        FoodDeliveryStatusDTO foodDeliveryStatusDTO = new FoodDeliveryStatusDTO();
+        foodDeliveryStatusDTO.setSeatNo(updatedSeatNumber);
+        foodDeliveryStatusDTO.setOrderId(orderId);
+        Response successResponse = new Response(1, "success", foodDeliveryStatusDTO);
+        Mockito.when(foodDeliveryService.updateSeatNo(Mockito.eq(seatInfo), Mockito.any(HttpHeaders.class)))
+                .thenReturn(successResponse);
         String requestJson = JSONObject.toJSONString(seatInfo);
-        String result = mockMvc.perform(MockMvcRequestBuilders.put("/api/v1/fooddeliveryservice/orders/seatno").contentType(MediaType.APPLICATION_JSON).content(requestJson))
+
+        String result = mockMvc.perform(MockMvcRequestBuilders
+                        .put("/api/v1/fooddeliveryservice/orders/seatno")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestJson))
                 .andExpect(MockMvcResultMatchers.status().isOk())
                 .andReturn().getResponse().getContentAsString();
-        Assert.assertEquals(response, JSONObject.parseObject(result, Response.class));
+        FoodDeliveryStatusDTO foodDeliveryStatusDtoResult = JSONObject.parseObject(
+                JSONObject.parseObject(result, Response.class).getData().toString(), FoodDeliveryStatusDTO.class
+        );
+
+        Assert.assertEquals(successResponse.getStatus(), JSONObject.parseObject(result, Response.class).getStatus());
+        Assert.assertEquals(successResponse.getMsg(), JSONObject.parseObject(result, Response.class).getMsg());
+        Assert.assertEquals(orderId, foodDeliveryStatusDtoResult.getOrderId());
+        Assert.assertEquals(updatedSeatNumber, foodDeliveryStatusDtoResult.getSeatNo());
+        Mockito.verify(foodDeliveryService, Mockito.times(1))
+                .updateSeatNo(Mockito.eq(seatInfo), Mockito.any(HttpHeaders.class));
     }
 
     @Test
     public void testUpdateDeliveryTime() throws Exception {
-        DeliveryInfo deliveryInfo = new DeliveryInfo();
-        Mockito.when(foodDeliveryService.updateDeliveryTime(Mockito.any(DeliveryInfo.class), Mockito.any(HttpHeaders.class))).thenReturn(response);
+        String orderId = "order ID";
+        String updatedDeliveryTime = "updated delivery time";
+        DeliveryInfo deliveryInfo = new DeliveryInfo(orderId, updatedDeliveryTime);
+        FoodDeliveryStatusDTO foodDeliveryStatusDTO = new FoodDeliveryStatusDTO();
+        foodDeliveryStatusDTO.setDeliveryTime(updatedDeliveryTime);
+        foodDeliveryStatusDTO.setOrderId(orderId);
+        Response successResponse = new Response(1, "success", foodDeliveryStatusDTO);
+        Mockito.when(foodDeliveryService.updateDeliveryTime(Mockito.eq(deliveryInfo), Mockito.any(HttpHeaders.class)))
+                .thenReturn(successResponse);
         String requestJson = JSONObject.toJSONString(deliveryInfo);
-        String result = mockMvc.perform(MockMvcRequestBuilders.put("/api/v1/fooddeliveryservice/orders/dtime").contentType(MediaType.APPLICATION_JSON).content(requestJson))
+
+        String result = mockMvc.perform(MockMvcRequestBuilders
+                        .put("/api/v1/fooddeliveryservice/orders/dtime")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestJson))
                 .andExpect(MockMvcResultMatchers.status().isOk())
                 .andReturn().getResponse().getContentAsString();
-        Assert.assertEquals(response, JSONObject.parseObject(result, Response.class));
+        FoodDeliveryStatusDTO foodDeliveryStatusDtoResult = JSONObject.parseObject(
+                JSONObject.parseObject(result, Response.class).getData().toString(), FoodDeliveryStatusDTO.class
+        );
+
+        Assert.assertEquals(successResponse.getStatus(), JSONObject.parseObject(result, Response.class).getStatus());
+        Assert.assertEquals(successResponse.getMsg(), JSONObject.parseObject(result, Response.class).getMsg());
+        Assert.assertEquals(orderId, foodDeliveryStatusDtoResult.getOrderId());
+        Assert.assertEquals(updatedDeliveryTime, foodDeliveryStatusDtoResult.getDeliveryTime());
+        Mockito.verify(foodDeliveryService, Mockito.times(1))
+                .updateDeliveryTime(Mockito.eq(deliveryInfo), Mockito.any(HttpHeaders.class));
     }
 
 }
