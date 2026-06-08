@@ -1,11 +1,18 @@
 package assurance.service;
 
-import assurance.entity.*;
+import assurance.entity.Assurance;
+import assurance.entity.AssuranceType;
+import assurance.entity.AssuranceTypeBean;
+import assurance.entity.PlainAssurance;
 import assurance.repository.AssuranceRepository;
 import edu.fudan.common.util.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
 
@@ -96,7 +103,7 @@ public class AssuranceServiceImpl implements AssuranceService {
     @Override
     public Response modify(String assuranceId, String orderId, int typeIndex, HttpHeaders headers) {
         Response oldAssuranceResponse = findAssuranceById(UUID.fromString(assuranceId), headers);
-        Assurance oldAssurance =  ((Optional<Assurance>)oldAssuranceResponse.getData()).get();
+        Assurance oldAssurance = ((Optional<Assurance>) oldAssuranceResponse.getData()).get();
         if (oldAssurance == null) {
             AssuranceServiceImpl.LOGGER.error("[modify][ModifyAssurance Fail][Assurance not found][assuranceId: {}, orderId: {}, typeIndex: {}]", assuranceId, orderId, typeIndex);
             return new Response<>(0, "Fail.Assurance not found.", null);
@@ -120,13 +127,7 @@ public class AssuranceServiceImpl implements AssuranceService {
         if (as != null && !as.isEmpty()) {
             ArrayList<PlainAssurance> result = new ArrayList<>();
             for (Assurance a : as) {
-                PlainAssurance pa = new PlainAssurance();
-                pa.setId(a.getId());
-                pa.setOrderId(a.getOrderId());
-                pa.setTypeIndex(a.getType().getIndex());
-                pa.setTypeName(a.getType().getName());
-                pa.setTypePrice(a.getType().getPrice());
-                result.add(pa);
+                result.add(toPlainAssurance(a));
             }
             AssuranceServiceImpl.LOGGER.info("[getAllAssurances][find all assurance success][list size: {}]", as.size());
             return new Response<>(1, "Success", result);
@@ -134,6 +135,50 @@ public class AssuranceServiceImpl implements AssuranceService {
             AssuranceServiceImpl.LOGGER.warn("[getAllAssurances][find all assurance][No content]");
             return new Response<>(0, "No Content, Assurance is empty", null);
         }
+    }
+
+    @Override
+    public Response getUserAssurancesPage(UUID userId, Integer page, Integer size, HttpHeaders headers) {
+        // Apply defaults: page=0, size=10
+        int pageNum = (page == null || page < 0) ? 0 : page;
+        int pageSize = (size == null || size <= 0) ? 10 : size;
+        
+        Pageable pageable = PageRequest.of(pageNum, pageSize);
+        
+        // Database-level pagination: only fetch required records
+        Page<Assurance> assurancePage = assuranceRepository.findAll(pageable);
+        
+        if (assurancePage != null && assurancePage.hasContent()) {
+            // Convert only the current page records to PlainAssurance
+            ArrayList<PlainAssurance> pageContent = new ArrayList<>();
+            for (Assurance a : assurancePage.getContent()) {
+                pageContent.add(toPlainAssurance(a));
+            }
+            
+            // Create Page object with PlainAssurance content
+            Page<PlainAssurance> pageResult = new PageImpl<>(
+                pageContent,
+                pageable,
+                assurancePage.getTotalElements()
+            );
+            
+            AssuranceServiceImpl.LOGGER.info("[getUserAssurancesPage][Get User's Assurances Paginated][page: {}, size: {}, total: {}]", 
+                pageNum, pageSize, assurancePage.getTotalElements());
+            return new Response<>(1, "Success", pageResult);
+        } else {
+            AssuranceServiceImpl.LOGGER.warn("[getUserAssurancesPage][Get User's Assurances Paginated][No content][userId: {}]", userId);
+            return new Response<>(0, "No Content", null);
+        }
+    }
+
+    private PlainAssurance toPlainAssurance(Assurance a) {
+        PlainAssurance pa = new PlainAssurance();
+        pa.setId(a.getId());
+        pa.setOrderId(a.getOrderId());
+        pa.setTypeIndex(a.getType().getIndex());
+        pa.setTypeName(a.getType().getName());
+        pa.setTypePrice(a.getType().getPrice());
+        return pa;
     }
 
     @Override

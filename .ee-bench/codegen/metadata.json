@@ -5,7 +5,10 @@
   "jvm_version": "8",
   "build_system": "maven",
   "expected": {
-    "fail_to_pass": [],
+    "fail_to_pass": [
+      "ts-assurance-service:assurance.service.AssuranceServiceImplTest",
+      "ts-assurance-service:assurance.controller.AssuranceControllerTest"
+    ],
     "pass_to_pass": []
   },
   "environment": {
